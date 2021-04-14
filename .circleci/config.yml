@@ -10,20 +10,30 @@ version: 2.1
 
 defaults: &defaults
   working_directory: ~/repo
-  environment:
-    LEIN_ROOT: "true"   # we intended to run lein as root
-    JVM_OPTS: -Xmx3200m # limit the maximum heap size to prevent out of memory errors
 
 # Runners for OpenJDK 8 and 11
 
 executors:
   openjdk8:
     docker:
-      - image: circleci/clojure:openjdk-8-lein-2.9.1-node
+      - image: circleci/clojure:openjdk-8-lein-2.9.5
+    environment:
+      LEIN_ROOT: "true"   # we intended to run lein as root
+      JVM_OPTS: -Xmx3200m # limit the maximum heap size to prevent out of memory errors
     <<: *defaults
   openjdk11:
     docker:
-      - image: circleci/clojure:openjdk-11-lein-2.9.1-node
+      - image: circleci/clojure:openjdk-11-lein-2.9.5
+    environment:
+      LEIN_ROOT: "true"   # we intended to run lein as root
+      JVM_OPTS: -Xmx3200m --illegal-access=deny # forbid illegal reflective access
+    <<: *defaults
+  openjdk16:
+    docker:
+      - image: circleci/clojure:openjdk-16-lein-2.9.5-buster
+    environment:
+      LEIN_ROOT: "true"   # we intended to run lein as root
+      JVM_OPTS: -Xmx3200m --illegal-access=deny # forbid illegal reflective access
     <<: *defaults
 
 # Runs a given set of steps, with some standard pre- and post-
@@ -58,10 +68,6 @@ commands:
           name: Install make
           command: |
             sudo apt-get install make
-      - run:
-          name: Install clj-kondo
-          command: |
-           sudo curl -sLO https://raw.githubusercontent.com/clj-kondo/clj-kondo/master/script/install-clj-kondo && sudo chmod +x install-clj-kondo && sudo ./install-clj-kondo
       - run:
           name: Generate Cache Checksum
           command: |
@@ -143,44 +149,14 @@ workflows:
   ci-test-matrix:
     jobs:
       - test_code:
-          name: Java 8, Clojure 1.8
-          clojure_version: "1.8"
-          jdk_version: openjdk8
-      - test_code:
-          name: Java 8, Clojure 1.9
-          clojure_version: "1.9"
-          jdk_version: openjdk8
-      - test_code:
-          name: Java 8, Clojure 1.10
-          clojure_version: "1.10"
-          jdk_version: openjdk8
-      # - test_code:
-      #     name: Java 8, Clojure master
-      #     clojure_version: "master"
-      #     jdk_version: openjdk8
-      - test_code:
-          name: Java 11, Clojure 1.8
-          clojure_version: "1.8"
-          jdk_version: openjdk11
-      - test_code:
-          name: Java 11, Clojure 1.9
-          clojure_version: "1.9"
-          jdk_version: openjdk11
-      - test_code:
-          name: Java 11, Clojure 1.10
-          clojure_version: "1.10"
-          jdk_version: openjdk11
-      # - test_code:
-      #     name: Java 11, Clojure master
-      #     clojure_version: "master"
-      #     jdk_version: openjdk11
+          matrix:
+            parameters:
+              # TODO: add "master"
+              clojure_version: ["1.8", "1.9", "1.10"]
+              jdk_version: [openjdk8, openjdk11, openjdk16]
       - util_job:
           name: Code Linting
           steps:
-            # - run:
-            #     name: Running Eastwood
-            #     command: |
-            #       make eastwood
             - run:
                 name: Running cljfmt
                 command: |
@@ -189,4 +165,8 @@ workflows:
                 name: Running clj-kondo
                 command: |
                   make kondo
+            - run:
+                name: Running Eastwood
+                command: |
+                  make eastwood
 
