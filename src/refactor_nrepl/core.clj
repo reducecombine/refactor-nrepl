@@ -1,7 +1,9 @@
 (ns refactor-nrepl.core
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.namespace.parse :as parse]
+            [clojure.tools.reader :as reader]
             [clojure.tools.reader.reader-types :as readers]
             [orchard.java.classpath :as cp]
             [orchard.misc :as misc]
@@ -159,6 +161,27 @@
     (and (not (data-file? path-or-file))
          (.endsWith path ".clj")
          (read-ns-form path))))
+
+(defn readable-file?
+  "Does the given file have valid clojure/edn syntax?
+
+  The any used aliases will be disregarded, i.e. this check is merely syntactic, not semantic."
+  [path-or-file]
+  (let [f (-> path-or-file io/file)]
+    (if (.isDirectory f)
+      false
+      (let [contents (slurp f)]
+        (try
+          (binding [reader/*read-eval* false
+                    reader/*default-data-reader-fn* (fn [_tag input]
+                                                      input)
+                    reader/*alias-map* (fn [_k]
+                                         'refactor-nrepl.pseudo.ns)]
+            (reader/read-string {:read-cond :preserve}
+                                (str "[ " contents " ]")))
+          true
+          (catch Exception _
+            false))))))
 
 (defn source-file?
   "True for clj, cljs or cljc files.

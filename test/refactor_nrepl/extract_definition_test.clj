@@ -11,6 +11,7 @@
             :line line
             :column col
             :name name
+            :ignore-errors "true"
             :dir "test-resources"})
           [:definition :definition]))
 
@@ -77,6 +78,7 @@
               :ns "extract-definition"
               :line 44
               :column 14
+              :ignore-errors "true"
               :name "if-let-bound"
               :dir "."})]
     (is (= (count (:occurrences res)) 1))

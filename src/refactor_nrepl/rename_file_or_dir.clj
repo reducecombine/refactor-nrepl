@@ -197,7 +197,8 @@
   [old-path new-path]
   (let [old-ns (core/ns-from-string (slurp old-path))
         new-ns (path->ns new-path)
-        tracker (tracker/build-tracker)
+        tracker (tracker/build-tracker (util/wrap-ignore-errors tracker/default-predicate
+                                                                :ignore-errors))
         dependents (tracker/get-dependents tracker old-ns)
         new-dependents (atom {})]
     (doseq [^File f dependents]

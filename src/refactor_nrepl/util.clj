@@ -72,3 +72,12 @@
 (defn maybe-log-exception [^Throwable e]
   (when (System/getProperty "refactor-nrepl.internal.log-exceptions")
     (.printStackTrace e)))
+
+(defn wrap-ignore-errors [f ignore-errors?]
+  (fn [x]
+    (try
+      (f x)
+      (catch Exception e
+        (when-not ignore-errors?
+          (throw e))
+        false))))

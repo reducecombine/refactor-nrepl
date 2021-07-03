@@ -15,7 +15,7 @@ cljfmt:
 	lein with-profile -user,+$(VERSION),+cljfmt,+lein-plugin cljfmt check
 
 eastwood:
-	lein with-profile -user,+$(VERSION),+eastwood eastwood
+	lein with-profile -user,+$(VERSION),+test,+eastwood eastwood
 
 kondo:
 	lein with-profile -dev,+$(VERSION),+clj-kondo run -m clj-kondo.main --lint src 
